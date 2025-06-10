@@ -2,30 +2,10 @@ import { AppDataSource } from '../lib/database';
 import { Prompt } from '../entities/Prompt';
 import { getOpenAIChatCompletion } from './openaiService';
 import type { Repository } from 'typeorm';
-
-export interface CreatePromptRequest {
-  title: string;
-  template: string;
-}
-
-export interface ExecutePromptRequest {
-  promptId: number;
-  variables: Record<string, any>;
-}
-
-export interface PromptResponse {
-  id: number;
-  title: string;
-  template: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface ExecutePromptResponse {
-  prompt: string;
-  response: string;
-  variables: Record<string, any>;
-}
+import { CreatePromptRequest } from '../models/request/CreatePromptRequest';
+import { ExecutePromptRequest } from '../models/request/ExecutePromptRequest';
+import { PromptResponse } from '../models/response/PromptResponse';
+import { ExecutePromptResponse } from '../models/response/ExecutePromptResponse';
 
 function getOpenAIEnvOptions() {
   return {
