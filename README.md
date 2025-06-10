@@ -1,70 +1,57 @@
 # Mini Prompt Hub
 
-A Next.js application for creating, managing, and executing AI prompt templates with variable substitution.
+A modern, fullstack Next.js application for creating, managing, and executing AI prompt templates with dynamic variable substitution and OpenAI integration.
 
-## Features
+---
 
-- **Create Prompt Templates**: Save reusable prompt templates with variable placeholders
-- **Variable Substitution**: Use `{variable_name}` syntax in templates
-- **AI Execution**: Execute prompts with OpenAI API integration
-- **Clean UI**: Modern, responsive interface built with Tailwind CSS
-- **TypeScript**: Full type safety throughout the application
+## ✨ Features
 
-## Tech Stack
+- **Prompt Templates:** Save and reuse prompt templates with `{variable}` placeholders.
+- **Dynamic Variable Forms:** UI auto-detects required variables for each prompt.
+- **AI Execution:** Instantly execute prompts with OpenAI and view results.
+- **Type Safety:** End-to-end TypeScript, custom request/response models.
+- **Clean Architecture:** Service layer, models, and OpenAI integration are fully decoupled.
+- **Beautiful UI:** Responsive, accessible, and themed with Tailwind CSS.
 
-- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes, TypeORM
-- **Database**: PostgreSQL
-- **AI Integration**: OpenAI API
+---
 
-## Prerequisites
+## 🛠️ Tech Stack
 
-- Node.js 18+ 
-- PostgreSQL database
-- OpenAI API key
+- **Frontend:** Next.js 15, React 19, TypeScript, Tailwind CSS
+- **Backend:** Next.js API Routes, TypeORM, Service Layer
+- **Database:** PostgreSQL (Docker or local)
+- **AI Integration:** OpenAI API (configurable via `.env`)
+- **Dev Tools:** pgAdmin, Docker Compose
 
-## Setup Instructions
+---
 
-### 1. Clone the Repository
+## 🚀 Getting Started
+
+### 1. Clone & Install
 
 ```bash
 git clone <your-repo-url>
 cd mini-prompt-hub
-```
-
-### 2. Install Dependencies
-
-```bash
 npm install
 ```
 
-### 3. Database Setup
+### 2. Database Setup
 
-#### Option A: Using Docker (Recommended)
-
+**Option A: Docker (Recommended)**
 ```bash
-# Start PostgreSQL container
-docker run --name prompt-hub-db \
-  -e POSTGRES_PASSWORD=your_password \
-  -e POSTGRES_DB=prompt_hub \
-  -p 5432:5432 \
-  -d postgres:15
+docker-compose up -d
 ```
+**Option B: Local PostgreSQL**
+- Create a database named `prompt_hub`
+- Set credentials in `.env`
 
-#### Option B: Local PostgreSQL
+### 3. Environment Variables
 
-1. Install PostgreSQL on your system
-2. Create a database named `prompt_hub`
-3. Note your database credentials
-
-### 4. Environment Configuration
-
-1. Copy the example environment file:
+Copy and edit your environment file:
 ```bash
 cp .env.example .env
 ```
-
-2. Update `.env` with your actual values:
+Fill in your actual values:
 ```env
 DB_HOST=localhost
 DB_PORT=5432
@@ -72,104 +59,115 @@ DB_USERNAME=postgres
 DB_PASSWORD=your_password
 DB_DATABASE=prompt_hub
 OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_MODEL=gpt-3.5-turbo
+OPENAI_MAX_TOKENS=1000
+OPENAI_TEMPERATURE=1
 ```
 
-### 5. Run the Application
+### 4. Run the App
 
 ```bash
 npm run dev
 ```
+Visit [http://localhost:3000](http://localhost:3000)
 
-The application will be available at `http://localhost:3000`
+---
 
-## Usage
+## 🧑‍💻 Usage
 
-### Creating a Prompt Template
+### Create a Prompt
 
-1. Navigate to the main page
-2. Fill in the "Create New Prompt" form:
-   - **Title**: A descriptive name (e.g., "Spanish Translator")
-   - **Template**: Your prompt with variables in `{curly_braces}` format
-   
-   Example template:
-   ```
-   Translate the following text into {language}: "{text_to_translate}"
-   ```
+- Fill in a title and a template (e.g. `Translate to {language}: "{text}"`)
+- Click **Create Prompt**
 
-3. Click "Create Prompt"
+### Execute a Prompt
 
-### Executing a Prompt
+- Enter values for each variable (auto-detected from the template)
+- Click **Execute**
+- View the AI's response instantly
 
-1. Find your prompt in the "Your Prompts" section
-2. Fill in the required variables (automatically detected from the template)
-3. Click "Execute"
-4. View the AI response in the results section
+---
 
-### Example Templates
-
-**Translation Prompt:**
-```
-Translate the following text into {language}: "{text_to_translate}"
-```
-
-**Code Review Prompt:**
-```
-Review this {language} code for best practices and potential issues:
-
-{code}
-```
-
-**Email Generator:**
-```
-Write a professional email to {recipient} about {subject}. The tone should be {tone}.
-```
-
-## API Endpoints
-
-- `POST /api/prompts` - Create a new prompt
-- `GET /api/prompts` - List all prompts
-- `GET /api/prompts/[id]` - Get a specific prompt
-- `POST /api/prompts/execute` - Execute a prompt with variables
-
-## Development
-
-### Project Structure
+## 🗂️ Project Structure
 
 ```
 src/
-├── components/          # React components
-│   └── PromptCard.tsx
-├── entities/           # TypeORM entities
-│   └── Prompt.ts
-├── lib/               # Utility functions
-│   └── database.ts
-└── pages/
-    ├── api/           # API routes
-    │   └── prompts/
-    └── index.tsx      # Main page
+  components/         # React UI components
+  entities/           # TypeORM entities
+  lib/                # Database config
+  models/
+    request/          # API request models (TypeScript)
+    response/         # API response models (TypeScript)
+  pages/
+    api/
+      prompts/        # API endpoints (clean, thin handlers)
+    index.tsx         # Main UI
+  services/           # Business logic & OpenAI integration
 ```
 
-### Database Schema
+---
 
-The `prompts` table contains:
-- `id`: Primary key (auto-incrementing)
-- `title`: Prompt title (varchar)
-- `template`: Prompt template with variables (text)
-- `createdAt`: Creation timestamp
-- `updatedAt`: Last update timestamp
+## 📦 API Endpoints
 
-## Contributing
+- `POST /api/prompts` — Create a new prompt
+- `GET /api/prompts` — List all prompts
+- `POST /api/prompts/execute` — Execute a prompt with variables
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+---
 
-## License
+## 🧠 AI Usage Log (Trust, but Verify)
+
+This project was built with a strong AI-assisted workflow, but every line was reviewed, tested, and improved by hand. Here are 5+ significant prompts I used:
+
+1. **TypeORM Entity Creation**
+   - _Prompt:_ "Create a TypeORM entity called Prompt with fields: id (auto-incrementing primary key), title (string), template (text), createdAt (timestamp), updatedAt (timestamp)"
+   - _Result:_ AI generated the entity, I verified decorators and types.
+
+2. **Database Configuration**
+   - _Prompt:_ "Create a TypeORM DataSource configuration for PostgreSQL with environment variables for connection details"
+   - _Result:_ AI provided the config, I added error handling and env fallbacks.
+
+3. **API Endpoint Structure**
+   - _Prompt:_ "Create Next.js API routes for POST /api/prompts (create), GET /api/prompts (list all), and POST /api/prompts/execute (execute with variables)"
+   - _Result:_ AI scaffolded the endpoints, I refactored for clean separation and error handling.
+
+4. **Dynamic Variable Extraction**
+   - _Prompt:_ "Create a function to extract variable names from a template string using regex pattern matching for {variable_name} format"
+   - _Result:_ AI gave a regex, I tested and integrated it for dynamic forms.
+
+5. **React Component Structure**
+   - _Prompt:_ "Create a React component for displaying individual prompts with dynamic form fields for variables and execution functionality"
+   - _Result:_ AI provided a base, I fixed React hooks usage and state management.
+
+6. **OpenAI Integration**
+   - _Prompt:_ "Integrate OpenAI API in the execute endpoint to send completed prompts and return AI responses"
+   - _Result:_ AI showed the SDK usage, I secured the API key and made the integration dynamic and configurable.
+
+7. **Environment Variables Setup**
+   - _Prompt:_ "Create environment variable configuration for database connection and OpenAI API key"
+   - _Result:_ AI suggested the variables, I created `.env.example` and documented all options.
+
+**Verification:**  
+For each prompt, I critically reviewed, tested, and improved the AI's output—ensuring robust error handling, type safety, and best practices throughout.
+
+---
+
+## 🧹 Clean Code Highlights
+
+- **Service Layer:** All business logic and validation is in services, not API handlers.
+- **Models:** All request/response types are centralized for type safety.
+- **OpenAI Integration:** Fully abstracted, configurable, and secure.
+- **Consistent Error Handling:** All API responses are JSON, with clear error messages.
+- **Atomic Commits:** Each change is tracked with a clear, conventional commit message.
+
+---
+
+## 📄 License
 
 This project is part of a take-home assignment for Promptrun.ai.
 
-## AI Usage
+---
 
-This project was developed using AI assistance following the "Trust, but Verify" principle. See `PROMPTS.md` for a detailed log of AI prompts used during development.
+## 💡 Questions?
+
+If you have any questions about the code, architecture, or my AI-assisted workflow, feel free to reach out!
