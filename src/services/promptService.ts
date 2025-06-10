@@ -3,6 +3,38 @@ import { Prompt } from '../entities/Prompt';
 import { getOpenAIChatCompletion } from './openaiService';
 import type { Repository } from 'typeorm';
 
+export interface CreatePromptRequest {
+  title: string;
+  template: string;
+}
+
+export interface ExecutePromptRequest {
+  promptId: number;
+  variables: Record<string, any>;
+}
+
+export interface PromptResponse {
+  id: number;
+  title: string;
+  template: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ExecutePromptResponse {
+  prompt: string;
+  response: string;
+  variables: Record<string, any>;
+}
+
+function getOpenAIEnvOptions() {
+  return {
+    model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
+    max_tokens: process.env.OPENAI_MAX_TOKENS ? parseInt(process.env.OPENAI_MAX_TOKENS) : 1000,
+    temperature: process.env.OPENAI_TEMPERATURE ? parseFloat(process.env.OPENAI_TEMPERATURE) : 1,
+  };
+}
+
 export class PromptService {
   private promptRepository: Repository<Prompt>;
 
@@ -19,19 +51,42 @@ export class PromptService {
     }
   }
 
-  async createPrompt(title: string, template: string) {
+  validateCreatePromptRequest(req: CreatePromptRequest) {
+    if (!req.title || typeof req.title !== 'string' || req.title.trim().length === 0) {
+      throw new Error('Title is required and must be a non-empty string');
+    }
+    if (!req.template || typeof req.template !== 'string' || req.template.trim().length === 0) {
+      throw new Error('Template is required and must be a non-empty string');
+    }
+  }
+
+  async createPrompt(title: string, template: string): Promise<PromptResponse> {
+    this.validateCreatePromptRequest({ title, template });
     const prompt = new Prompt();
     prompt.title = title.trim();
     prompt.template = template.trim();
-    return await this.promptRepository.save(prompt);
+    const saved = await this.promptRepository.save(prompt);
+    return saved;
   }
 
-  async getAllPrompts() {
+  async getAllPrompts(): Promise<PromptResponse[]> {
     return await this.promptRepository.find({ order: { createdAt: 'DESC' } });
   }
 
-  async getPromptById(id: number) {
+  async getPromptById(id: number): Promise<PromptResponse | null> {
+    if (!id || typeof id !== 'number' || isNaN(id)) {
+      throw new Error('ID must be a valid number');
+    }
     return await this.promptRepository.findOne({ where: { id } });
+  }
+
+  validateExecutePromptRequest(req: ExecutePromptRequest) {
+    if (!req.promptId || typeof req.promptId !== 'number' || isNaN(req.promptId)) {
+      throw new Error('promptId must be a valid number');
+    }
+    if (typeof req.variables !== 'object' || req.variables === null) {
+      throw new Error('variables must be an object');
+    }
   }
 
   replaceVariables(template: string, variables: Record<string, any>): string {
@@ -40,20 +95,22 @@ export class PromptService {
     });
   }
 
-  async executePrompt(promptId: number, variables: Record<string, any>, openaiOptions?: Partial<{ model: string; max_tokens: number; temperature: number; }>) {
+  async executePrompt(promptId: number, variables: Record<string, any>): Promise<ExecutePromptResponse> {
+    this.validateExecutePromptRequest({ promptId, variables });
     const prompt = await this.getPromptById(promptId);
     if (!prompt) throw new Error('Prompt not found');
     const completedPrompt = this.replaceVariables(prompt.template, variables);
+    const openaiOptions = getOpenAIEnvOptions();
     const completion = await getOpenAIChatCompletion({
-      model: openaiOptions?.model || 'gpt-3.5-turbo',
+      model: openaiOptions.model,
       messages: [
         {
           role: 'user',
           content: completedPrompt,
         },
       ],
-      max_tokens: openaiOptions?.max_tokens || 1000,
-      temperature: openaiOptions?.temperature || 1,
+      max_tokens: openaiOptions.max_tokens,
+      temperature: openaiOptions.temperature,
     });
     const aiResponse = completion.choices[0]?.message?.content || 'No response from AI';
     return {
