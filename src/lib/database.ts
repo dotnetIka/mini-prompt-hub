@@ -6,7 +6,7 @@ export const AppDataSource = new DataSource({
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432'),
   username: process.env.DB_USERNAME || 'postgres',
-  password: process.env.DB_PASSWORD || 'your_password',
+  password: process.env.DB_PASSWORD || 'admin123',
   database: process.env.DB_DATABASE || 'prompt_hub',
   synchronize: true, // Be careful with this in production
   logging: false,

@@ -48,10 +48,15 @@ export default function Home() {
   const fetchPrompts = async () => {
     try {
       const response = await fetch('/api/prompts');
+      if (!response.ok) {
+        setPrompts([]); // fallback to empty array on error
+        return;
+      }
       const data = await response.json();
-      setPrompts(data);
+      setPrompts(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching prompts:', error);
+      setPrompts([]); // fallback to empty array on error
     }
   };
 
@@ -112,19 +117,19 @@ export default function Home() {
   };
 
   return (
-    <div className={`${geistSans.className} ${geistMono.className} min-h-screen bg-gray-50 p-8`}>
+    <div className={`${geistSans.className} ${geistMono.className} min-h-screen bg-white p-0`}>
       <div className="max-w-6xl mx-auto">
-        <header className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Mini Prompt Hub</h1>
-          <p className="text-lg text-gray-600">Create, manage, and execute AI prompt templates</p>
+        <header className="text-center mb-12 bg-blue-900 py-10 shadow-md rounded-b-2xl">
+          <h1 className="text-4xl font-bold text-white mb-4">Mini Prompt Hub</h1>
+          <p className="text-lg text-blue-100">Create, manage, and execute AI prompt templates</p>
         </header>
 
         {/* Create New Prompt Form */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Create New Prompt</h2>
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8 border border-blue-100">
+          <h2 className="text-2xl font-semibold mb-4 text-blue-900">Create New Prompt</h2>
           <form onSubmit={createPrompt} className="space-y-4">
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="title" className="block text-sm font-medium text-blue-900 mb-2">
                 Title
               </label>
               <input
@@ -132,20 +137,20 @@ export default function Home() {
                 id="title"
                 value={newPrompt.title}
                 onChange={(e) => setNewPrompt(prev => ({ ...prev, title: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-blue-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 text-blue-900 bg-white"
                 placeholder="e.g., Spanish Translator"
                 required
               />
             </div>
             <div>
-              <label htmlFor="template" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="template" className="block text-sm font-medium text-blue-900 mb-2">
                 Template
               </label>
               <textarea
                 id="template"
                 value={newPrompt.template}
                 onChange={(e) => setNewPrompt(prev => ({ ...prev, template: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-32"
+                className="w-full px-3 py-2 border border-blue-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600 h-32 text-blue-900 bg-white"
                 placeholder='e.g., Translate the following text into {language}: "{text_to_translate}"'
                 required
               />
@@ -153,7 +158,7 @@ export default function Home() {
             <button
               type="submit"
               disabled={loading}
-              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-blue-700 text-white px-6 py-2 rounded-md hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed shadow"
             >
               {loading ? 'Creating...' : 'Create Prompt'}
             </button>
@@ -162,10 +167,10 @@ export default function Home() {
 
         {/* Prompts List */}
         <div className="space-y-6">
-          <h2 className="text-2xl font-semibold">Your Prompts</h2>
+          <h2 className="text-2xl font-semibold text-blue-900">Your Prompts</h2>
           {prompts.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500">No prompts created yet. Create your first prompt above!</p>
+              <p className="text-blue-400">No prompts created yet. Create your first prompt above!</p>
             </div>
           ) : (
             prompts.map((prompt) => (
