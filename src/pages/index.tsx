@@ -1,5 +1,6 @@
-import Image from "next/image";
+import { useState, useEffect } from 'react';
 import { Geist, Geist_Mono } from "next/font/google";
+import PromptCard from '../components/PromptCard';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -11,105 +12,174 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+interface Prompt {
+  id: number;
+  title: string;
+  template: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ExecuteResponse {
+  prompt: string;
+  response: string;
+  variables: Record<string, any>;
+}
+
+// Function to extract variables from template
+function extractVariables(template: string): string[] {
+  const matches = template.match(/\{(\w+)\}/g);
+  if (!matches) return [];
+  return matches.map(match => match.slice(1, -1));
+}
+
 export default function Home() {
+  const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [newPrompt, setNewPrompt] = useState({ title: '', template: '' });
+  const [loading, setLoading] = useState(false);
+  const [executeResults, setExecuteResults] = useState<Record<number, ExecuteResponse>>({});
+  const [executeLoading, setExecuteLoading] = useState<Record<number, boolean>>({});
+
+  // Fetch prompts on component mount
+  useEffect(() => {
+    fetchPrompts();
+  }, []);
+
+  const fetchPrompts = async () => {
+    try {
+      const response = await fetch('/api/prompts');
+      const data = await response.json();
+      setPrompts(data);
+    } catch (error) {
+      console.error('Error fetching prompts:', error);
+    }
+  };
+
+  const createPrompt = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      const response = await fetch('/api/prompts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newPrompt),
+      });
+
+      if (response.ok) {
+        const createdPrompt = await response.json();
+        setPrompts([createdPrompt, ...prompts]);
+        setNewPrompt({ title: '', template: '' });
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Error creating prompt:', error);
+      alert('Failed to create prompt');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const executePrompt = async (promptId: number, variables: Record<string, any>) => {
+    setExecuteLoading(prev => ({ ...prev, [promptId]: true }));
+    
+    try {
+      const response = await fetch('/api/prompts/execute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ promptId, variables }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setExecuteResults(prev => ({ ...prev, [promptId]: result }));
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Error executing prompt:', error);
+      alert('Failed to execute prompt');
+    } finally {
+      setExecuteLoading(prev => ({ ...prev, [promptId]: false }));
+    }
+  };
+
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/pages/index.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className={`${geistSans.className} ${geistMono.className} min-h-screen bg-gray-50 p-8`}>
+      <div className="max-w-6xl mx-auto">
+        <header className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Mini Prompt Hub</h1>
+          <p className="text-lg text-gray-600">Create, manage, and execute AI prompt templates</p>
+        </header>
+
+        {/* Create New Prompt Form */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <h2 className="text-2xl font-semibold mb-4">Create New Prompt</h2>
+          <form onSubmit={createPrompt} className="space-y-4">
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+                Title
+              </label>
+              <input
+                type="text"
+                id="title"
+                value={newPrompt.title}
+                onChange={(e) => setNewPrompt(prev => ({ ...prev, title: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="e.g., Spanish Translator"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="template" className="block text-sm font-medium text-gray-700 mb-2">
+                Template
+              </label>
+              <textarea
+                id="template"
+                value={newPrompt.template}
+                onChange={(e) => setNewPrompt(prev => ({ ...prev, template: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-32"
+                placeholder='e.g., Translate the following text into {language}: "{text_to_translate}"'
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Creating...' : 'Create Prompt'}
+            </button>
+          </form>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {/* Prompts List */}
+        <div className="space-y-6">
+          <h2 className="text-2xl font-semibold">Your Prompts</h2>
+          {prompts.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No prompts created yet. Create your first prompt above!</p>
+            </div>
+          ) : (
+            prompts.map((prompt) => (
+              <PromptCard
+                key={prompt.id}
+                prompt={prompt}
+                onExecute={executePrompt}
+                executeLoading={executeLoading[prompt.id] || false}
+                executeResult={executeResults[prompt.id]}
+              />
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 }
